@@ -11,5 +11,8 @@ public partial class MainPage : ContentPage
     {
         await Shell.Current.GoToAsync(nameof(ProjectsPage));
     }
+    private async void OnCreateProjectClicked(object sender, EventArgs e)
+    {
+    }
 
 }
