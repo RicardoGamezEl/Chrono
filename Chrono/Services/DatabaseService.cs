@@ -15,4 +15,12 @@ public class DatabaseService
         await _database.CreateTableAsync<TaskItem>();
         await _database.CreateTableAsync<TimeEntry>();
     }
+    public async Task SaveProjectAsync(Project project)
+    {
+        await _database.InsertAsync(project);
+    }
+    public async Task<List<Project>> GetProjectsAsync()
+    {
+        return await _database.Table<Project>().ToListAsync();
+    }
 }
