@@ -1,4 +1,6 @@
-﻿namespace Chrono;
+﻿using Chrono.Services;
+
+namespace Chrono;
 
 public partial class MainPage : ContentPage
 {
@@ -11,8 +13,4 @@ public partial class MainPage : ContentPage
     {
         await Shell.Current.GoToAsync(nameof(ProjectsPage));
     }
-    private async void OnCreateProjectClicked(object sender, EventArgs e)
-    {
-    }
-
 }
