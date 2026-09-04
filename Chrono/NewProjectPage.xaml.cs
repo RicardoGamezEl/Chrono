@@ -19,5 +19,6 @@ public partial class NewProjectPage : ContentPage
 			Description = DescriptionEditor.Text
 		};
 		await _databaseService.SaveProjectAsync(project);
+		await Shell.Current.GoToAsync("..");
 	}
 }

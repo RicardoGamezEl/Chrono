@@ -22,7 +22,7 @@
         />
         <Button
            Text="+ Nuevo proyecto"
-           Clicked="OnCreateProjectClicked"
+           Clicked="OnNewProjectClicked"
         />
 
     </VerticalStackLayout>

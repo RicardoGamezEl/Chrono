@@ -24,7 +24,7 @@ public partial class ProjectsPage : ContentPage
             Projects.Add(project);
         }
     }
-    private async void OnCreateProjectClicked(object sender, EventArgs e)
+    private async void OnNewProjectClicked(object sender, EventArgs e)
     {
         await Shell.Current.GoToAsync(nameof(NewProjectPage));
     }
