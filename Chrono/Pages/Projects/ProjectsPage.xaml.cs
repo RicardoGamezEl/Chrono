@@ -1,4 +1,5 @@
 using Chrono.Models;
+using Chrono.Pages.Tasks;
 using Chrono.Services;
 using System.Collections.ObjectModel;
 namespace Chrono;
@@ -27,6 +28,13 @@ public partial class ProjectsPage : ContentPage
     private async void OnNewProjectClicked(object sender, EventArgs e)
     {
         await Shell.Current.GoToAsync(nameof(NewProjectPage));
+    }
+    private async void OnProjectClicked(object sender, EventArgs e)
+    {
+        var button = (Button)sender;
+        var project =(Project)button.CommandParameter;
+
+        await Shell.Current.GoToAsync($"{nameof(TasksPage)}?projectId={project.Id}");
     }
 
 }

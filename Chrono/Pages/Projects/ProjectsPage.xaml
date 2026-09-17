@@ -7,10 +7,13 @@
         <CollectionView ItemsSource="{Binding Projects}">
             <CollectionView.ItemTemplate>
                 <DataTemplate>
-                    <Label
+                    <Button
                         Text="{Binding Name}"
                         FontSize="18"
+                        Margin="5"
                         Padding="10"
+                        CommandParameter= "{Binding .}"
+                        Clicked="OnProjectClicked"
                     />
                 </DataTemplate>
             </CollectionView.ItemTemplate>

@@ -23,4 +23,25 @@ public class DatabaseService
     {
         return await _database.Table<Project>().ToListAsync();
     }
+    public async Task<List<TaskItem>> GetTaskByProjectAsync(int projectId)
+    {
+        return await _database
+            .Table<TaskItem>()
+            .Where(task => task.ProjectId == projectId)
+            .ToListAsync();
+    }
+
+    public async Task SaveTaskAsync(TaskItem task)
+    {
+        await _database.InsertAsync(task);
+    }
+    /*
+     * Eliminar tarea
+     * public async Task DeleteTaskAsync(int taskId)
+    {
+        await _database
+            .Table<TaskItem>()
+            .Where(task => task.Id == taskId)
+            .DeleteAsync();
+    }*/
 }
