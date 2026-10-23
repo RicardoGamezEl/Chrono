@@ -3,30 +3,71 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="Chrono.ProjectsPage"
              Title="Proyectos">
-    <VerticalStackLayout>
-        <CollectionView ItemsSource="{Binding Projects}">
+    <Grid RowDefinitions="Auto,*,Auto" Padding="15" RowSpacing="10">
+        <VerticalStackLayout Grid.Row="0" Spacing="6">
+            <Label
+                Text="Mis Proyectos"
+                FontSize="24"
+                FontAttributes="Bold" />
+            <Label
+                x:Name="TotalProjectsLabel"
+                Text="Total de proyectos: 0"
+                FontSize="14"
+                TextColor="Gray" />
+        </VerticalStackLayout>
+
+        <CollectionView Grid.Row="1" ItemsSource="{Binding Projects}">
+            <CollectionView.EmptyView>
+                <VerticalStackLayout HorizontalOptions="Center" VerticalOptions="Center" Padding="30" Spacing="10">
+                    <Label Text="No tienes proyectos creados."
+                           FontSize="16"
+                           HorizontalOptions="Center" />
+                    <Label Text="Toca en '+ Nuevo proyecto' para registrar uno."
+                           FontSize="13"
+                           TextColor="Gray"
+                           HorizontalOptions="Center" />
+                </VerticalStackLayout>
+            </CollectionView.EmptyView>
             <CollectionView.ItemTemplate>
                 <DataTemplate>
-                    <Button
-                        Text="{Binding Name}"
-                        FontSize="18"
-                        Margin="5"
-                        Padding="10"
-                        CommandParameter= "{Binding .}"
-                        Clicked="OnProjectClicked"
-                    />
+                    <Border StrokeShape="RoundRectangle 8" Padding="12" Margin="0,5">
+                        <VerticalStackLayout Spacing="8">
+                            <Label
+                                Text="{Binding Name}"
+                                FontSize="18"
+                                FontAttributes="Bold" />
+                            <Label
+                                Text="{Binding Description}"
+                                FontSize="13"
+                                TextColor="Gray" />
+                            <HorizontalStackLayout Spacing="8" Margin="0,4,0,0">
+                                <Button
+                                    Text="Ver Tareas"
+                                    FontSize="13"
+                                    Clicked="OnProjectClicked"
+                                    CommandParameter="{Binding .}" />
+                                <Button
+                                    Text="Editar"
+                                    FontSize="13"
+                                    Clicked="OnEditProjectClicked"
+                                    CommandParameter="{Binding .}" />
+                                <Button
+                                    Text="Eliminar"
+                                    FontSize="13"
+                                    BackgroundColor="#D9534F"
+                                    Clicked="OnDeleteProjectClicked"
+                                    CommandParameter="{Binding .}" />
+                            </HorizontalStackLayout>
+                        </VerticalStackLayout>
+                    </Border>
                 </DataTemplate>
             </CollectionView.ItemTemplate>
         </CollectionView>
-        <Label
-            Text="Total de proyectos: 0"
-            FontSize="16"
-            Padding="0,10"
-        />
-        <Button
-           Text="+ Nuevo proyecto"
-           Clicked="OnNewProjectClicked"
-        />
 
-    </VerticalStackLayout>
+        <Button
+            Grid.Row="2"
+            Text="+ Nuevo proyecto"
+            Clicked="OnNewProjectClicked"
+            Margin="0,5,0,0" />
+    </Grid>
 </ContentPage>

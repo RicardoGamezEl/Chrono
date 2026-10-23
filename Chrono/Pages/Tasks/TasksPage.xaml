@@ -2,32 +2,77 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="Chrono.Pages.Tasks.TasksPage"
-             Title="TasksPage">
-    <VerticalStackLayout Padding="20">
+             Title="Tareas">
+    <Grid RowDefinitions="Auto,*,Auto" Padding="15" RowSpacing="10">
+        <VerticalStackLayout Grid.Row="0" Spacing="6">
+            <Label
+                x:Name="TitleProject"
+                Text="Tareas del proyecto"
+                FontSize="24"
+                FontAttributes="Bold" />
 
-        <Label
-        Text="Tareas del proyecto"
-        x:Name="TitleProject"
-        FontSize="30" />
+            <Label
+                x:Name="ProjectIdLabel"
+                FontSize="14"
+                TextColor="Gray" />
+        </VerticalStackLayout>
 
-        <Label
-        x:Name="ProjectIdLabel"
-        FontSize="16" />
-
-        <Button
-            Text="+ Nueva tarea"
-            Clicked="OnNewTaskClicked"/>
-
-        <CollectionView ItemsSource="{Binding Tasks}">
+        <CollectionView Grid.Row="1" ItemsSource="{Binding Tasks}">
+            <CollectionView.EmptyView>
+                <VerticalStackLayout HorizontalOptions="Center" VerticalOptions="Center" Padding="30" Spacing="10">
+                    <Label Text="No hay tareas en este proyecto."
+                           FontSize="16"
+                           HorizontalOptions="Center" />
+                    <Label Text="Toca en '+ Nueva tarea' para crear la primera."
+                           FontSize="13"
+                           TextColor="Gray"
+                           HorizontalOptions="Center" />
+                </VerticalStackLayout>
+            </CollectionView.EmptyView>
             <CollectionView.ItemTemplate>
                 <DataTemplate>
-                    <Label
-                    Text="{Binding Title}"
-                    FontSize="18"
-                    Padding="10" />
+                    <Border StrokeShape="RoundRectangle 8" Padding="12" Margin="0,5">
+                        <VerticalStackLayout Spacing="8">
+                            <Label
+                                Text="{Binding Title}"
+                                FontSize="18"
+                                FontAttributes="Bold" />
+
+                            <Label
+                                Text="{Binding Description}"
+                                FontSize="13"
+                                TextColor="Gray" />
+
+                            <HorizontalStackLayout Spacing="8" Margin="0,4,0,0">
+                                <Button
+                                    Text="{Binding StatusDisplay}"
+                                    FontSize="13"
+                                    Clicked="OnStatusClicked"
+                                    CommandParameter="{Binding .}"/>
+
+                                <Button
+                                    Text="Editar"
+                                    FontSize="13"
+                                    Clicked="OnEditTaskClicked"
+                                    CommandParameter="{Binding .}"/>
+
+                                <Button
+                                    Text="Eliminar"
+                                    FontSize="13"
+                                    BackgroundColor="#D9534F"
+                                    Clicked="OnDeleteTaskClicked"
+                                    CommandParameter="{Binding .}"/>
+                            </HorizontalStackLayout>
+                        </VerticalStackLayout>
+                    </Border>
                 </DataTemplate>
             </CollectionView.ItemTemplate>
         </CollectionView>
 
-    </VerticalStackLayout>
+        <Button
+            Grid.Row="2"
+            Text="+ Nueva tarea"
+            Clicked="OnNewTaskClicked"
+            Margin="0,5,0,0"/>
+    </Grid>
 </ContentPage>
