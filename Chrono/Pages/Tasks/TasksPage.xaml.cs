@@ -48,9 +48,13 @@ public partial class TasksPage : ContentPage
             }
 
             var tasks = await _databaseService.GetTaskByProjectAsync(projectId);
+            var activeSession = await _databaseService.GetActiveTimeEntryAsync();
+
             Tasks.Clear();
             foreach (var task in tasks)
             {
+                task.TotalTime = await _databaseService.GetTotalDurationByTaskAsync(task.Id);
+                task.HasActiveSession = (activeSession != null && activeSession.TaskId == task.Id);
                 Tasks.Add(task);
             }
         }
@@ -59,6 +63,22 @@ public partial class TasksPage : ContentPage
     public async void OnNewTaskClicked(object? sender, EventArgs e)
     {
         await Shell.Current.GoToAsync($"{nameof(NewTaskPage)}?projectId={ProjectId}");
+    }
+
+    public async void OnTimerClicked(object? sender, EventArgs e)
+    {
+        if (sender is Button button && button.CommandParameter is TaskItem task)
+        {
+            await Shell.Current.GoToAsync($"{nameof(TimerPage)}?taskId={task.Id}&projectId={ProjectId}");
+        }
+    }
+
+    public async void OnHistoryClicked(object? sender, EventArgs e)
+    {
+        if (sender is Button button && button.CommandParameter is TaskItem task)
+        {
+            await Shell.Current.GoToAsync($"{nameof(SessionHistoryPage)}?taskId={task.Id}");
+        }
     }
 
     public async void OnEditTaskClicked(object? sender, EventArgs e)

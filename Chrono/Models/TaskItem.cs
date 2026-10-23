@@ -14,6 +14,8 @@ public class TaskItem : INotifyPropertyChanged
     private string _description = string.Empty;
     private TaskStatus _status = TaskStatus.NotStarted;
     private DateTime _createdAt = DateTime.Now;
+    private TimeSpan _totalTime = TimeSpan.Zero;
+    private bool _hasActiveSession;
 
     [PrimaryKey, AutoIncrement]
     public int Id { get; set; }
@@ -79,6 +81,38 @@ public class TaskItem : INotifyPropertyChanged
             if (_createdAt != value)
             {
                 _createdAt = value;
+                OnPropertyChanged();
+            }
+        }
+    }
+
+    [Ignore]
+    public TimeSpan TotalTime
+    {
+        get => _totalTime;
+        set
+        {
+            if (_totalTime != value)
+            {
+                _totalTime = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(FormattedTotalTime));
+            }
+        }
+    }
+
+    [Ignore]
+    public string FormattedTotalTime => $"{(int)TotalTime.TotalHours:D2}:{TotalTime.Minutes:D2}:{TotalTime.Seconds:D2}";
+
+    [Ignore]
+    public bool HasActiveSession
+    {
+        get => _hasActiveSession;
+        set
+        {
+            if (_hasActiveSession != value)
+            {
+                _hasActiveSession = value;
                 OnPropertyChanged();
             }
         }

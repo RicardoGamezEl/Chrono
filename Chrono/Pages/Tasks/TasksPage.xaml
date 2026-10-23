@@ -33,36 +33,66 @@
                 <DataTemplate>
                     <Border StrokeShape="RoundRectangle 8" Padding="12" Margin="0,5">
                         <VerticalStackLayout Spacing="8">
-                            <Label
-                                Text="{Binding Title}"
-                                FontSize="18"
-                                FontAttributes="Bold" />
+                            <HorizontalStackLayout Spacing="8">
+                                <Label
+                                    Text="{Binding Title}"
+                                    FontSize="18"
+                                    FontAttributes="Bold" />
+                                <Label
+                                    Text="● EN CURSO"
+                                    FontSize="11"
+                                    TextColor="#28A745"
+                                    FontAttributes="Bold"
+                                    VerticalOptions="Center"
+                                    IsVisible="{Binding HasActiveSession}" />
+                            </HorizontalStackLayout>
 
                             <Label
                                 Text="{Binding Description}"
                                 FontSize="13"
                                 TextColor="Gray" />
 
-                            <HorizontalStackLayout Spacing="8" Margin="0,4,0,0">
+                            <Label
+                                Text="{Binding FormattedTotalTime, StringFormat='⏱ Tiempo: {0}'}"
+                                FontSize="12"
+                                TextColor="#512BD4"
+                                FontAttributes="Bold" />
+
+                            <FlexLayout JustifyContent="SpaceBetween" AlignItems="Center" Wrap="Wrap">
                                 <Button
                                     Text="{Binding StatusDisplay}"
-                                    FontSize="13"
+                                    FontSize="12"
                                     Clicked="OnStatusClicked"
-                                    CommandParameter="{Binding .}"/>
+                                    CommandParameter="{Binding .}"
+                                    Margin="0,4"/>
 
-                                <Button
-                                    Text="Editar"
-                                    FontSize="13"
-                                    Clicked="OnEditTaskClicked"
-                                    CommandParameter="{Binding .}"/>
+                                <HorizontalStackLayout Spacing="6" Margin="0,4">
+                                    <Button
+                                        Text="⏱ Cronómetro"
+                                        FontSize="12"
+                                        Clicked="OnTimerClicked"
+                                        CommandParameter="{Binding .}"/>
 
-                                <Button
-                                    Text="Eliminar"
-                                    FontSize="13"
-                                    BackgroundColor="#D9534F"
-                                    Clicked="OnDeleteTaskClicked"
-                                    CommandParameter="{Binding .}"/>
-                            </HorizontalStackLayout>
+                                    <Button
+                                        Text="📜 Historial"
+                                        FontSize="12"
+                                        Clicked="OnHistoryClicked"
+                                        CommandParameter="{Binding .}"/>
+
+                                    <Button
+                                        Text="Editar"
+                                        FontSize="12"
+                                        Clicked="OnEditTaskClicked"
+                                        CommandParameter="{Binding .}"/>
+
+                                    <Button
+                                        Text="Eliminar"
+                                        FontSize="12"
+                                        BackgroundColor="#D9534F"
+                                        Clicked="OnDeleteTaskClicked"
+                                        CommandParameter="{Binding .}"/>
+                                </HorizontalStackLayout>
+                            </FlexLayout>
                         </VerticalStackLayout>
                     </Border>
                 </DataTemplate>

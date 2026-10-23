@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="Chrono.Pages.Tasks.TimerPage"
+             Title="Temporizador">
+    <ScrollView>
+        <VerticalStackLayout Padding="20" Spacing="20">
+            <VerticalStackLayout Spacing="4">
+                <Label
+                    x:Name="TaskTitleLabel"
+                    Text="Tarea"
+                    FontSize="24"
+                    FontAttributes="Bold" />
+
+                <Label
+                    x:Name="ProjectNameLabel"
+                    Text="Proyecto"
+                    FontSize="14"
+                    TextColor="Gray" />
+
+                <Label
+                    x:Name="TaskStatusLabel"
+                    Text="Estado: Sin Iniciar"
+                    FontSize="13"
+                    TextColor="#512BD4"
+                    FontAttributes="Bold" />
+            </VerticalStackLayout>
+
+            <Border
+                StrokeShape="RoundRectangle 16"
+                Padding="24"
+                BackgroundColor="{AppThemeBinding Light=#F7F7F9, Dark=#262626}">
+                <VerticalStackLayout Spacing="16" HorizontalOptions="Center">
+                    <Label
+                        x:Name="StatusBadgeLabel"
+                        Text="DETENIDO"
+                        FontSize="12"
+                        FontAttributes="Bold"
+                        TextColor="Gray"
+                        HorizontalOptions="Center" />
+
+                    <Label
+                        x:Name="TimerDisplayLabel"
+                        Text="00:00:00"
+                        FontSize="56"
+                        FontAttributes="Bold"
+                        HorizontalOptions="Center" />
+
+                    <Label
+                        x:Name="SessionStartLabel"
+                        Text="Sin sesión activa"
+                        FontSize="13"
+                        TextColor="Gray"
+                        HorizontalOptions="Center" />
+                </VerticalStackLayout>
+            </Border>
+
+            <VerticalStackLayout Spacing="12">
+                <Button
+                    x:Name="StartButton"
+                    Text="▶ Iniciar Sesión"
+                    FontSize="16"
+                    FontAttributes="Bold"
+                    BackgroundColor="#28A745"
+                    TextColor="White"
+                    Clicked="OnStartClicked"
+                    HeightRequest="50" />
+
+                <Button
+                    x:Name="StopButton"
+                    Text="⏹ Finalizar Sesión"
+                    FontSize="16"
+                    FontAttributes="Bold"
+                    BackgroundColor="#DC3545"
+                    TextColor="White"
+                    Clicked="OnStopClicked"
+                    IsEnabled="False"
+                    HeightRequest="50" />
+
+                <Button
+                    x:Name="HistoryButton"
+                    Text="📜 Ver Historial de Sesiones"
+                    FontSize="14"
+                    Clicked="OnHistoryClicked" />
+            </VerticalStackLayout>
+
+            <Border StrokeShape="RoundRectangle 8" Padding="14">
+                <VerticalStackLayout Spacing="4">
+                    <Label
+                        Text="Tiempo Total Acumulado en esta Tarea:"
+                        FontSize="12"
+                        TextColor="Gray" />
+                    <Label
+                        x:Name="TotalAccumulatedTimeLabel"
+                        Text="00:00:00"
+                        FontSize="20"
+                        FontAttributes="Bold" />
+                </VerticalStackLayout>
+            </Border>
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

@@ -26,6 +26,8 @@ namespace Chrono
             builder.Services.AddTransient<NewProjectPage>();
             builder.Services.AddTransient<TasksPage>();
             builder.Services.AddTransient<NewTaskPage>();
+            builder.Services.AddTransient<TimerPage>();
+            builder.Services.AddTransient<SessionHistoryPage>();
 
 #if DEBUG
             builder.Logging.AddDebug();

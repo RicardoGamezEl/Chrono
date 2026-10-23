@@ -30,6 +30,7 @@ public partial class ProjectsPage : ContentPage
         Projects.Clear();
         foreach (var project in projects)
         {
+            project.TotalTime = await _databaseService.GetTotalDurationByProjectAsync(project.Id);
             Projects.Add(project);
         }
         TotalProjectsLabel.Text = $"Total de proyectos: {Projects.Count}";

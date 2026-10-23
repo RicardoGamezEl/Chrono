@@ -116,4 +116,81 @@ public class DatabaseService
         await db.Table<TimeEntry>().Where(te => te.TaskId == taskId).DeleteAsync();
         await db.Table<TaskItem>().Where(task => task.Id == taskId).DeleteAsync();
     }
+
+    // Time Tracking & Sessions
+    public async Task SaveTimeEntryAsync(TimeEntry entry)
+    {
+        var db = await GetDatabaseAsync();
+        await db.InsertAsync(entry);
+    }
+
+    public async Task UpdateTimeEntryAsync(TimeEntry entry)
+    {
+        var db = await GetDatabaseAsync();
+        await db.UpdateAsync(entry);
+    }
+
+    public async Task DeleteTimeEntryAsync(int id)
+    {
+        var db = await GetDatabaseAsync();
+        await db.Table<TimeEntry>().Where(te => te.Id == id).DeleteAsync();
+    }
+
+    public async Task<TimeEntry?> GetActiveTimeEntryAsync()
+    {
+        var db = await GetDatabaseAsync();
+        return await db.Table<TimeEntry>().FirstOrDefaultAsync(te => te.End == null);
+    }
+
+    public async Task<TimeEntry?> GetActiveTimeEntryByTaskAsync(int taskId)
+    {
+        var db = await GetDatabaseAsync();
+        return await db.Table<TimeEntry>().FirstOrDefaultAsync(te => te.TaskId == taskId && te.End == null);
+    }
+
+    public async Task<List<TimeEntry>> GetTimeEntriesByTaskAsync(int taskId)
+    {
+        var db = await GetDatabaseAsync();
+        return await db.Table<TimeEntry>()
+            .Where(te => te.TaskId == taskId)
+            .OrderByDescending(te => te.Start)
+            .ToListAsync();
+    }
+
+    public async Task<List<TimeEntry>> GetTimeEntriesByProjectAsync(int projectId)
+    {
+        var db = await GetDatabaseAsync();
+        var tasks = await db.Table<TaskItem>().Where(t => t.ProjectId == projectId).ToListAsync();
+        if (tasks.Count == 0)
+            return new List<TimeEntry>();
+
+        var taskIds = tasks.Select(t => t.Id).ToHashSet();
+        var allEntries = await db.Table<TimeEntry>().ToListAsync();
+        return allEntries
+            .Where(te => taskIds.Contains(te.TaskId))
+            .OrderByDescending(te => te.Start)
+            .ToList();
+    }
+
+    public async Task<TimeSpan> GetTotalDurationByTaskAsync(int taskId)
+    {
+        var entries = await GetTimeEntriesByTaskAsync(taskId);
+        var total = TimeSpan.Zero;
+        foreach (var entry in entries)
+        {
+            total += entry.Duration;
+        }
+        return total;
+    }
+
+    public async Task<TimeSpan> GetTotalDurationByProjectAsync(int projectId)
+    {
+        var entries = await GetTimeEntriesByProjectAsync(projectId);
+        var total = TimeSpan.Zero;
+        foreach (var entry in entries)
+        {
+            total += entry.Duration;
+        }
+        return total;
+    }
 }

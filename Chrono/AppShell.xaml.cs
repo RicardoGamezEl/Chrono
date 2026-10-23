@@ -1,4 +1,4 @@
-﻿using Chrono.Pages;
+using Chrono.Pages;
 using Chrono.Pages.Tasks;
 
 namespace Chrono
@@ -12,6 +12,8 @@ namespace Chrono
             Routing.RegisterRoute(nameof(NewProjectPage), typeof(NewProjectPage));
             Routing.RegisterRoute(nameof(TasksPage), typeof(TasksPage));
             Routing.RegisterRoute(nameof(NewTaskPage), typeof(NewTaskPage));
+            Routing.RegisterRoute(nameof(TimerPage), typeof(TimerPage));
+            Routing.RegisterRoute(nameof(SessionHistoryPage), typeof(SessionHistoryPage));
         }
     }
 }

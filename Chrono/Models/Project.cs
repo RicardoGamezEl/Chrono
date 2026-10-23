@@ -12,6 +12,7 @@ public class Project : INotifyPropertyChanged
     private string _name = string.Empty;
     private string _description = string.Empty;
     private DateTime _createdAt = DateTime.Now;
+    private TimeSpan _totalTime = TimeSpan.Zero;
 
     [PrimaryKey, AutoIncrement]
     public int Id { get; set; }
@@ -54,6 +55,24 @@ public class Project : INotifyPropertyChanged
             }
         }
     }
+
+    [Ignore]
+    public TimeSpan TotalTime
+    {
+        get => _totalTime;
+        set
+        {
+            if (_totalTime != value)
+            {
+                _totalTime = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(FormattedTotalTime));
+            }
+        }
+    }
+
+    [Ignore]
+    public string FormattedTotalTime => $"{(int)TotalTime.TotalHours:D2}:{TotalTime.Minutes:D2}:{TotalTime.Seconds:D2}";
 
     protected void OnPropertyChanged([CallerMemberName] string? propertyName = null)
     {
