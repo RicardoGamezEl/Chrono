@@ -19,6 +19,8 @@ namespace Chrono
 
             // Services
             builder.Services.AddSingleton<DatabaseService>();
+            builder.Services.AddSingleton<ProductivityStatsCalculator>();
+            builder.Services.AddSingleton<StatsService>();
 
             // Pages
             builder.Services.AddTransient<MainPage>();

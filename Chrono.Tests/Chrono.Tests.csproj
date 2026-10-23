@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="coverlet.collector" Version="6.0.4" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageReference Include="xunit" Version="2.9.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.4" />
+    <PackageReference Include="sqlite-net-pcl" Version="1.11.285" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\Chrono\Models\TaskStatus.cs" Link="Models\TaskStatus.cs" />
+    <Compile Include="..\Chrono\Models\Project.cs" Link="Models\Project.cs" />
+    <Compile Include="..\Chrono\Models\TaskItem.cs" Link="Models\TaskItem.cs" />
+    <Compile Include="..\Chrono\Models\TimeEntry.cs" Link="Models\TimeEntry.cs" />
+    <Compile Include="..\Chrono\Models\ProjectProgressStats.cs" Link="Models\ProjectProgressStats.cs" />
+    <Compile Include="..\Chrono\Models\RecentActivityItem.cs" Link="Models\RecentActivityItem.cs" />
+    <Compile Include="..\Chrono\Models\ProductivityDashboardStats.cs" Link="Models\ProductivityDashboardStats.cs" />
+    <Compile Include="..\Chrono\Services\ProductivityStatsCalculator.cs" Link="Services\ProductivityStatsCalculator.cs" />
+  </ItemGroup>
+
+</Project>

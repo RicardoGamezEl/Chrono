@@ -193,4 +193,16 @@ public class DatabaseService
         }
         return total;
     }
+
+    public async Task<List<TaskItem>> GetAllTasksAsync()
+    {
+        var db = await GetDatabaseAsync();
+        return await db.Table<TaskItem>().ToListAsync();
+    }
+
+    public async Task<List<TimeEntry>> GetAllTimeEntriesAsync()
+    {
+        var db = await GetDatabaseAsync();
+        return await db.Table<TimeEntry>().ToListAsync();
+    }
 }

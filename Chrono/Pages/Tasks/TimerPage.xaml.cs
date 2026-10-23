@@ -13,6 +13,7 @@ public partial class TimerPage : ContentPage
     private Project? _project;
     private TimeEntry? _activeEntry;
     private IDispatcherTimer? _dispatcherTimer;
+    private bool _isProcessing;
 
     public string TaskId { get; set; } = string.Empty;
     public string ProjectId { get; set; } = string.Empty;
@@ -158,67 +159,83 @@ public partial class TimerPage : ContentPage
 
     private async void OnStartClicked(object? sender, EventArgs e)
     {
-        if (_task == null) return;
+        if (_task == null || _isProcessing) return;
+        _isProcessing = true;
 
-        // Verify no simultaneous active session anywhere in the app
-        var globalActive = await _databaseService.GetActiveTimeEntryAsync();
-        if (globalActive != null)
+        try
         {
-            if (globalActive.TaskId != _task.Id)
+            // Verify no simultaneous active session anywhere in the app
+            var globalActive = await _databaseService.GetActiveTimeEntryAsync();
+            if (globalActive != null)
             {
-                await DisplayAlertAsync("Sesión Activa", "Ya existe una sesión de tiempo activa en otra tarea. Detén esa sesión antes de iniciar una nueva.", "Aceptar");
+                if (globalActive.TaskId != _task.Id)
+                {
+                    await DisplayAlertAsync("Sesión Activa", "Ya existe una sesión de tiempo activa en otra tarea. Detén esa sesión antes de iniciar una nueva.", "Aceptar");
+                    return;
+                }
+                // Already active on this task
+                _activeEntry = globalActive;
+                SetRunningUi(true);
+                _dispatcherTimer?.Start();
                 return;
             }
-            // Already active on this task
-            _activeEntry = globalActive;
+
+            var newEntry = new TimeEntry
+            {
+                TaskId = _task.Id,
+                Start = DateTime.Now,
+                End = null
+            };
+
+            await _databaseService.SaveTimeEntryAsync(newEntry);
+            _activeEntry = newEntry;
+
+            if (_task.Status == TaskStatus.NotStarted)
+            {
+                _task.Status = TaskStatus.InProgress;
+                await _databaseService.UpdateTaskAsync(_task);
+                TaskStatusLabel.Text = $"Estado: {_task.StatusDisplay}";
+            }
+
             SetRunningUi(true);
+            UpdateTimerDisplay();
             _dispatcherTimer?.Start();
-            return;
         }
-
-        var newEntry = new TimeEntry
+        finally
         {
-            TaskId = _task.Id,
-            Start = DateTime.Now,
-            End = null
-        };
-
-        await _databaseService.SaveTimeEntryAsync(newEntry);
-        _activeEntry = newEntry;
-
-        if (_task.Status == TaskStatus.NotStarted)
-        {
-            _task.Status = TaskStatus.InProgress;
-            await _databaseService.UpdateTaskAsync(_task);
-            TaskStatusLabel.Text = $"Estado: {_task.StatusDisplay}";
+            _isProcessing = false;
         }
-
-        SetRunningUi(true);
-        UpdateTimerDisplay();
-        _dispatcherTimer?.Start();
     }
 
     private async void OnStopClicked(object? sender, EventArgs e)
     {
-        if (_activeEntry == null) return;
+        if (_activeEntry == null || _isProcessing) return;
+        _isProcessing = true;
 
-        _dispatcherTimer?.Stop();
-        _activeEntry.End = DateTime.Now;
-        await _databaseService.UpdateTimeEntryAsync(_activeEntry);
+        try
+        {
+            _dispatcherTimer?.Stop();
+            _activeEntry.End = DateTime.Now;
+            await _databaseService.UpdateTimeEntryAsync(_activeEntry);
 
-        var duration = _activeEntry.Duration;
-        _activeEntry = null;
+            var duration = _activeEntry.Duration;
+            _activeEntry = null;
 
-        SetRunningUi(false);
-        TimerDisplayLabel.Text = "00:00:00";
-        SessionStartLabel.Text = "Sesión finalizada con éxito";
+            SetRunningUi(false);
+            TimerDisplayLabel.Text = "00:00:00";
+            SessionStartLabel.Text = "Sesión finalizada con éxito";
 
-        await RefreshTotalTimeAsync();
+            await RefreshTotalTimeAsync();
 
-        await DisplayAlertAsync(
-            "Sesión Finalizada",
-            $"Sesión registrada correctamente.\nDuración: {(int)duration.TotalHours:D2}:{duration.Minutes:D2}:{duration.Seconds:D2}",
-            "Aceptar");
+            await DisplayAlertAsync(
+                "Sesión Finalizada",
+                $"Sesión registrada correctamente.\nDuración: {(int)duration.TotalHours:D2}:{duration.Minutes:D2}:{duration.Seconds:D2}",
+                "Aceptar");
+        }
+        finally
+        {
+            _isProcessing = false;
+        }
     }
 
     private async void OnHistoryClicked(object? sender, EventArgs e)
