@@ -187,4 +187,76 @@ public class ProductivityStatsCalculatorTests
         Assert.Equal(30, total.TotalHours);
         Assert.Equal("30:00:00", $"{(int)total.TotalHours:D2}:{total.Minutes:D2}:{total.Seconds:D2}");
     }
+
+    [Fact]
+    public void CalculateDashboardStats_PlannedAndRemainingTime_CalculatesCorrectBudgetAndProgress()
+    {
+        // Arrange
+        var project = new Project { Id = 1, Name = "P1" };
+        var tasks = new List<TaskItem>
+        {
+            // Task 1: 2h planned, 30m worked -> 1h 30m remaining
+            new() { Id = 1, ProjectId = 1, Title = "T1", PlannedDurationTicks = TimeSpan.FromHours(2).Ticks },
+            // Task 2: 1h planned, 45m worked -> 15m remaining
+            new() { Id = 2, ProjectId = 1, Title = "T2", PlannedDurationTicks = TimeSpan.FromHours(1).Ticks },
+            // Task 3: 0h planned (stopwatch) -> 20m worked -> 0 remaining
+            new() { Id = 3, ProjectId = 1, Title = "T3", PlannedDurationTicks = 0 }
+        };
+
+        var entries = new List<TimeEntry>
+        {
+            new() { Id = 1, TaskId = 1, Start = new DateTime(2026, 1, 1, 10, 0, 0), End = new DateTime(2026, 1, 1, 10, 30, 0) },
+            new() { Id = 2, TaskId = 2, Start = new DateTime(2026, 1, 1, 11, 0, 0), End = new DateTime(2026, 1, 1, 11, 45, 0) },
+            new() { Id = 3, TaskId = 3, Start = new DateTime(2026, 1, 1, 12, 0, 0), End = new DateTime(2026, 1, 1, 12, 20, 0) }
+        };
+
+        // Act
+        var result = _calculator.CalculateDashboardStats(new[] { project }, tasks, entries);
+
+        // Assert
+        // Total Planned = 2h + 1h = 3h
+        Assert.Equal(TimeSpan.FromHours(3), result.TotalPlannedTime);
+        Assert.Equal("03:00:00", result.FormattedTotalPlannedTime);
+
+        // Total Remaining = 1h 30m + 15m = 1h 45m
+        Assert.Equal(TimeSpan.FromMinutes(105), result.TotalRemainingTime);
+        Assert.Equal("01:45:00", result.FormattedTotalRemainingTime);
+
+        // Total Worked on planned tasks = 30m + 45m = 75m
+        // Total Planned = 180m
+        // Progress Ratio = 75 / 180 = 0.416666...
+        Assert.Equal(75.0 / 180.0, result.TimeProgressRatio, precision: 3);
+        Assert.Equal("42%", result.FormattedTimeProgress);
+
+        // Total Logged Time across all tasks (including T3) = 30m + 45m + 20m = 95m (1h 35m)
+        Assert.Equal(TimeSpan.FromMinutes(95), result.TotalLoggedTime);
+        Assert.Equal("01:35:00", result.FormattedTotalTime);
+    }
+
+    [Fact]
+    public void CalculateDashboardStats_ActiveSession_DetectedCorrectly()
+    {
+        // Arrange
+        var project = new Project { Id = 1, Name = "Proyecto Activo" };
+        var task = new TaskItem { Id = 10, ProjectId = 1, Title = "Tarea en Curso" };
+
+        var entries = new List<TimeEntry>
+        {
+            // Completed session
+            new() { Id = 1, TaskId = 10, Start = new DateTime(2026, 1, 1, 9, 0, 0), End = new DateTime(2026, 1, 1, 10, 0, 0) },
+            // Ongoing session (End is null)
+            new() { Id = 2, TaskId = 10, Start = new DateTime(2026, 1, 1, 11, 0, 0), End = null }
+        };
+
+        // Act
+        var result = _calculator.CalculateDashboardStats(new[] { project }, new[] { task }, entries);
+
+        // Assert
+        Assert.True(result.HasActiveSession);
+        Assert.NotNull(result.ActiveSession);
+        Assert.Equal(2, result.ActiveSession.TimeEntryId);
+        Assert.Equal("Tarea en Curso", result.ActiveSession.TaskTitle);
+        Assert.Equal("Proyecto Activo", result.ActiveSession.ProjectName);
+        Assert.Null(result.ActiveSession.End);
+    }
 }

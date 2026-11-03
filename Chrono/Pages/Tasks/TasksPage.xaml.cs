@@ -1,6 +1,9 @@
+using System;
+using System.Collections.ObjectModel;
+using System.Linq;
+using System.Threading.Tasks;
 using Chrono.Models;
 using Chrono.Services;
-using System.Collections.ObjectModel;
 using TaskStatus = Chrono.Models.TaskStatus;
 
 namespace Chrono.Pages.Tasks;
@@ -9,6 +12,7 @@ namespace Chrono.Pages.Tasks;
 public partial class TasksPage : ContentPage
 {
     private readonly DatabaseService _databaseService;
+    private readonly ITaskTimerService _timerService;
     private string _projectId = string.Empty;
 
     public ObservableCollection<TaskItem> Tasks { get; } = new();
@@ -23,17 +27,32 @@ public partial class TasksPage : ContentPage
         }
     }
 
-    public TasksPage(DatabaseService databaseService)
+    public TasksPage(DatabaseService databaseService, ITaskTimerService timerService)
     {
         InitializeComponent();
         _databaseService = databaseService;
+        _timerService = timerService;
         BindingContext = this;
     }
 
     protected override async void OnAppearing()
     {
         base.OnAppearing();
+
+        _timerService.TimerTick += OnTimerTick;
+        _timerService.SessionStarted += OnSessionStarted;
+        _timerService.SessionCompleted += OnSessionCompleted;
+
         await LoadProjectAndTasksAsync();
+    }
+
+    protected override void OnDisappearing()
+    {
+        base.OnDisappearing();
+
+        _timerService.TimerTick -= OnTimerTick;
+        _timerService.SessionStarted -= OnSessionStarted;
+        _timerService.SessionCompleted -= OnSessionCompleted;
     }
 
     public async Task LoadProjectAndTasksAsync()
@@ -48,16 +67,71 @@ public partial class TasksPage : ContentPage
             }
 
             var tasks = await _databaseService.GetTaskByProjectAsync(projectId);
-            var activeSession = await _databaseService.GetActiveTimeEntryAsync();
+            var activeSessionState = await _timerService.GetActiveSessionStateAsync();
 
             Tasks.Clear();
             foreach (var task in tasks)
             {
-                task.TotalTime = await _databaseService.GetTotalDurationByTaskAsync(task.Id);
-                task.HasActiveSession = (activeSession != null && activeSession.TaskId == task.Id);
+                var isThisActive = activeSessionState != null && activeSessionState.Task.Id == task.Id;
+                if (isThisActive)
+                {
+                    task.TotalTime = activeSessionState!.TotalAccumulatedDuration;
+                    task.HasActiveSession = true;
+                }
+                else
+                {
+                    task.TotalTime = await _databaseService.GetTotalDurationByTaskAsync(task.Id, includeActive: false);
+                    task.HasActiveSession = false;
+                }
+
                 Tasks.Add(task);
             }
         }
+    }
+
+    private void OnTimerTick(object? sender, ActiveSessionState state)
+    {
+        MainThread.BeginInvokeOnMainThread(() =>
+        {
+            var task = Tasks.FirstOrDefault(t => t.Id == state.Task.Id);
+            if (task != null)
+            {
+                if (!task.HasActiveSession)
+                {
+                    task.HasActiveSession = true;
+                }
+                task.TotalTime = state.TotalAccumulatedDuration;
+            }
+        });
+    }
+
+    private void OnSessionStarted(object? sender, ActiveSessionState state)
+    {
+        MainThread.BeginInvokeOnMainThread(() =>
+        {
+            foreach (var task in Tasks)
+            {
+                var isCurrent = task.Id == state.Task.Id;
+                task.HasActiveSession = isCurrent;
+                if (isCurrent)
+                {
+                    task.TotalTime = state.TotalAccumulatedDuration;
+                }
+            }
+        });
+    }
+
+    private void OnSessionCompleted(object? sender, ActiveSessionState state)
+    {
+        MainThread.BeginInvokeOnMainThread(() =>
+        {
+            var task = Tasks.FirstOrDefault(t => t.Id == state.Task.Id);
+            if (task != null)
+            {
+                task.HasActiveSession = false;
+                task.TotalTime = state.TotalAccumulatedDuration;
+            }
+        });
     }
 
     public async void OnNewTaskClicked(object? sender, EventArgs e)

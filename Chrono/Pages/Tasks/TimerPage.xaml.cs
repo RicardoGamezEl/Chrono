@@ -9,30 +9,37 @@ namespace Chrono.Pages.Tasks;
 public partial class TimerPage : ContentPage
 {
     private readonly DatabaseService _databaseService;
+    private readonly ITaskTimerService _timerService;
+
     private TaskItem? _task;
     private Project? _project;
-    private TimeEntry? _activeEntry;
-    private IDispatcherTimer? _dispatcherTimer;
     private bool _isProcessing;
 
     public string TaskId { get; set; } = string.Empty;
     public string ProjectId { get; set; } = string.Empty;
 
-    public TimerPage(DatabaseService databaseService)
+    public TimerPage(DatabaseService databaseService, ITaskTimerService timerService)
     {
         InitializeComponent();
         _databaseService = databaseService;
+        _timerService = timerService;
     }
 
     protected override async void OnAppearing()
     {
         base.OnAppearing();
 
-        if (_dispatcherTimer == null)
+        _timerService.TimerTick += OnTimerTick;
+        _timerService.SessionCompleted += OnSessionCompleted;
+        _timerService.SessionStarted += OnSessionStarted;
+
+        try
         {
-            _dispatcherTimer = Dispatcher.CreateTimer();
-            _dispatcherTimer.Interval = TimeSpan.FromSeconds(1);
-            _dispatcherTimer.Tick += OnTimerTick;
+            await _timerService.ReconcileActiveSessionAsync();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error reconciling on appearing: {ex.Message}");
         }
 
         await LoadDataAsync();
@@ -41,7 +48,10 @@ public partial class TimerPage : ContentPage
     protected override void OnDisappearing()
     {
         base.OnDisappearing();
-        _dispatcherTimer?.Stop();
+
+        _timerService.TimerTick -= OnTimerTick;
+        _timerService.SessionCompleted -= OnSessionCompleted;
+        _timerService.SessionStarted -= OnSessionStarted;
     }
 
     private async Task LoadDataAsync()
@@ -68,93 +78,155 @@ public partial class TimerPage : ContentPage
             ProjectNameLabel.Text = $"Proyecto: {_project.Name}";
         }
 
-        // Check for active sessions across entire app
-        var globalActive = await _databaseService.GetActiveTimeEntryAsync();
+        // Total accumulated duration from completed sessions
+        var priorDuration = await _databaseService.GetTotalDurationByTaskAsync(_task.Id);
+        _task.TotalTime = priorDuration;
 
-        if (globalActive != null)
+        PlannedBudgetLabel.Text = _task.HasPlannedDuration ? _task.FormattedPlannedDuration : "Sin límite";
+        TotalAccumulatedTimeLabel.Text = _task.FormattedTotalTime;
+
+        // Check active session state via timer service
+        var activeState = await _timerService.GetActiveSessionStateAsync();
+
+        if (activeState != null)
         {
-            if (globalActive.TaskId == _task.Id)
+            if (activeState.Task.Id == _task.Id)
             {
-                // Active session belongs to THIS task -> resume counting seamlessly
-                _activeEntry = globalActive;
-                SetRunningUi(true);
-                UpdateTimerDisplay();
-                _dispatcherTimer?.Start();
+                // Active session belongs to THIS task
+                SetRunningUi(activeState);
             }
             else
             {
                 // Active session belongs to another task
-                _activeEntry = null;
-                _dispatcherTimer?.Stop();
-                SetBlockedUi();
+                SetBlockedUi(activeState);
             }
         }
         else
         {
-            // No active session anywhere
-            _activeEntry = null;
-            _dispatcherTimer?.Stop();
-            SetRunningUi(false);
-            TimerDisplayLabel.Text = "00:00:00";
-            SessionStartLabel.Text = "Sin sesión activa";
+            // No active session
+            SetStoppedUi();
         }
-
-        await RefreshTotalTimeAsync();
     }
 
-    private async Task RefreshTotalTimeAsync()
+    private void SetRunningUi(ActiveSessionState state)
+    {
+        StatusBadgeLabel.Text = state.IsCountdown ? "● CUENTA REGRESIVA EN CURSO" : "● CRONÓMETRO EN EJECUCIÓN";
+        StatusBadgeLabel.TextColor = Color.FromArgb("#28A745");
+
+        TimerModeLabel.Text = state.IsCountdown ? "TIEMPO RESTANTE" : "TIEMPO TRANSCURRIDO";
+        TimerDisplayLabel.Text = state.IsCountdown ? state.FormattedRemainingTime : state.FormattedCurrentElapsed;
+
+        CurrentSessionElapsedLabel.Text = state.FormattedCurrentElapsed;
+        TotalAccumulatedTimeLabel.Text = state.FormattedTotalAccumulated;
+
+        SessionStartLabel.Text = $"Iniciado: {state.Entry.Start:HH:mm:ss} ({state.Entry.Start:dd/MM/yyyy})";
+
+        StartButton.IsEnabled = false;
+        StopButton.IsEnabled = true;
+    }
+
+    private void SetStoppedUi()
     {
         if (_task == null) return;
-        var total = await _databaseService.GetTotalDurationByTaskAsync(_task.Id);
-        TotalAccumulatedTimeLabel.Text = $"{(int)total.TotalHours:D2}:{total.Minutes:D2}:{total.Seconds:D2}";
-    }
 
-    private void SetRunningUi(bool isRunning)
-    {
-        if (isRunning)
+        bool isCountdown = _task.HasPlannedDuration;
+        TimerModeLabel.Text = isCountdown ? "TIEMPO RESTANTE" : "CRONÓMETRO LIBRE";
+
+        if (isCountdown)
         {
-            StatusBadgeLabel.Text = "● EN EJECUCIÓN";
-            StatusBadgeLabel.TextColor = Color.FromArgb("#28A745");
-            StartButton.IsEnabled = false;
-            StopButton.IsEnabled = true;
-            if (_activeEntry != null)
+            TimerDisplayLabel.Text = _task.FormattedRemainingTime;
+            if (_task.RemainingTime <= TimeSpan.Zero)
             {
-                SessionStartLabel.Text = $"Iniciado: {_activeEntry.Start:HH:mm:ss} ({_activeEntry.Start:dd/MM/yyyy})";
+                StatusBadgeLabel.Text = "PRESUPUESTO COMPLETADO";
+                StatusBadgeLabel.TextColor = Color.FromArgb("#512BD4");
+                SessionStartLabel.Text = "El tiempo planificado ha sido completado";
+                StartButton.IsEnabled = false;
+            }
+            else
+            {
+                StatusBadgeLabel.Text = "DETENIDO";
+                StatusBadgeLabel.TextColor = Colors.Gray;
+                SessionStartLabel.Text = "Sin sesión activa";
+                StartButton.IsEnabled = true;
             }
         }
         else
         {
+            TimerDisplayLabel.Text = "00:00:00";
             StatusBadgeLabel.Text = "DETENIDO";
             StatusBadgeLabel.TextColor = Colors.Gray;
+            SessionStartLabel.Text = "Sin sesión activa";
             StartButton.IsEnabled = true;
-            StopButton.IsEnabled = false;
         }
+
+        CurrentSessionElapsedLabel.Text = "00:00:00";
+        TotalAccumulatedTimeLabel.Text = _task.FormattedTotalTime;
+        StopButton.IsEnabled = false;
     }
 
-    private void SetBlockedUi()
+    private void SetBlockedUi(ActiveSessionState otherState)
     {
         StatusBadgeLabel.Text = "⚠ SESIÓN ACTIVA EN OTRA TAREA";
         StatusBadgeLabel.TextColor = Colors.OrangeRed;
-        SessionStartLabel.Text = "Hay una sesión de tiempo activa en otra tarea. Debes detenerla primero.";
+        SessionStartLabel.Text = $"Hay una sesión activa en '{otherState.Task.Title}'. Debes detenerla primero.";
+
         StartButton.IsEnabled = false;
         StopButton.IsEnabled = false;
-        TimerDisplayLabel.Text = "00:00:00";
-    }
 
-    private void OnTimerTick(object? sender, EventArgs e)
-    {
-        UpdateTimerDisplay();
-    }
-
-    private void UpdateTimerDisplay()
-    {
-        if (_activeEntry != null)
+        if (_task != null && _task.HasPlannedDuration)
         {
-            var elapsed = DateTime.Now >= _activeEntry.Start
-                ? DateTime.Now - _activeEntry.Start
-                : TimeSpan.Zero;
-            TimerDisplayLabel.Text = $"{(int)elapsed.TotalHours:D2}:{elapsed.Minutes:D2}:{elapsed.Seconds:D2}";
+            TimerModeLabel.Text = "TIEMPO RESTANTE";
+            TimerDisplayLabel.Text = _task.FormattedRemainingTime;
         }
+        else
+        {
+            TimerModeLabel.Text = "CRONÓMETRO LIBRE";
+            TimerDisplayLabel.Text = "00:00:00";
+        }
+    }
+
+    private void OnTimerTick(object? sender, ActiveSessionState state)
+    {
+        if (_task == null || state.Task.Id != _task.Id)
+            return;
+
+        MainThread.BeginInvokeOnMainThread(() =>
+        {
+            if (state.IsCountdown)
+            {
+                TimerDisplayLabel.Text = state.FormattedRemainingTime;
+            }
+            else
+            {
+                TimerDisplayLabel.Text = state.FormattedCurrentElapsed;
+            }
+
+            CurrentSessionElapsedLabel.Text = state.FormattedCurrentElapsed;
+            TotalAccumulatedTimeLabel.Text = state.FormattedTotalAccumulated;
+        });
+    }
+
+    private void OnSessionStarted(object? sender, ActiveSessionState state)
+    {
+        if (_task == null || state.Task.Id != _task.Id)
+            return;
+
+        MainThread.BeginInvokeOnMainThread(() =>
+        {
+            SetRunningUi(state);
+            TaskStatusLabel.Text = $"Estado: {state.Task.StatusDisplay}";
+        });
+    }
+
+    private void OnSessionCompleted(object? sender, ActiveSessionState state)
+    {
+        if (_task == null || state.Task.Id != _task.Id)
+            return;
+
+        MainThread.BeginInvokeOnMainThread(async () =>
+        {
+            await LoadDataAsync();
+        });
     }
 
     private async void OnStartClicked(object? sender, EventArgs e)
@@ -164,42 +236,17 @@ public partial class TimerPage : ContentPage
 
         try
         {
-            // Verify no simultaneous active session anywhere in the app
-            var globalActive = await _databaseService.GetActiveTimeEntryAsync();
-            if (globalActive != null)
-            {
-                if (globalActive.TaskId != _task.Id)
-                {
-                    await DisplayAlertAsync("Sesión Activa", "Ya existe una sesión de tiempo activa en otra tarea. Detén esa sesión antes de iniciar una nueva.", "Aceptar");
-                    return;
-                }
-                // Already active on this task
-                _activeEntry = globalActive;
-                SetRunningUi(true);
-                _dispatcherTimer?.Start();
-                return;
-            }
-
-            var newEntry = new TimeEntry
-            {
-                TaskId = _task.Id,
-                Start = DateTime.Now,
-                End = null
-            };
-
-            await _databaseService.SaveTimeEntryAsync(newEntry);
-            _activeEntry = newEntry;
-
-            if (_task.Status == TaskStatus.NotStarted)
-            {
-                _task.Status = TaskStatus.InProgress;
-                await _databaseService.UpdateTaskAsync(_task);
-                TaskStatusLabel.Text = $"Estado: {_task.StatusDisplay}";
-            }
-
-            SetRunningUi(true);
-            UpdateTimerDisplay();
-            _dispatcherTimer?.Start();
+            var state = await _timerService.StartSessionAsync(_task.Id);
+            SetRunningUi(state);
+            TaskStatusLabel.Text = $"Estado: {_task.StatusDisplay}";
+        }
+        catch (InvalidOperationException ex)
+        {
+            await DisplayAlertAsync("Sesión", ex.Message, "Aceptar");
+        }
+        catch (Exception ex)
+        {
+            await DisplayAlertAsync("Error", $"No se pudo iniciar la sesión: {ex.Message}", "Aceptar");
         }
         finally
         {
@@ -209,28 +256,17 @@ public partial class TimerPage : ContentPage
 
     private async void OnStopClicked(object? sender, EventArgs e)
     {
-        if (_activeEntry == null || _isProcessing) return;
+        if (_task == null || _isProcessing) return;
         _isProcessing = true;
 
         try
         {
-            _dispatcherTimer?.Stop();
-            _activeEntry.End = DateTime.Now;
-            await _databaseService.UpdateTimeEntryAsync(_activeEntry);
-
-            var duration = _activeEntry.Duration;
-            _activeEntry = null;
-
-            SetRunningUi(false);
-            TimerDisplayLabel.Text = "00:00:00";
-            SessionStartLabel.Text = "Sesión finalizada con éxito";
-
-            await RefreshTotalTimeAsync();
-
-            await DisplayAlertAsync(
-                "Sesión Finalizada",
-                $"Sesión registrada correctamente.\nDuración: {(int)duration.TotalHours:D2}:{duration.Minutes:D2}:{duration.Seconds:D2}",
-                "Aceptar");
+            var state = await _timerService.StopSessionAsync(_task.Id);
+            await LoadDataAsync();
+        }
+        catch (Exception ex)
+        {
+            await DisplayAlertAsync("Error", $"No se pudo detener la sesión: {ex.Message}", "Aceptar");
         }
         finally
         {

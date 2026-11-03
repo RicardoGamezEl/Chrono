@@ -34,6 +34,55 @@
                 </HorizontalStackLayout>
             </Grid>
 
+            <!-- Tarjeta de Sesión Activa (si existe) -->
+            <Border
+                StrokeShape="RoundRectangle 14"
+                Stroke="#28A745"
+                StrokeThickness="1.5"
+                BackgroundColor="{AppThemeBinding Light=#EBF8EE, Dark=#142618}"
+                Padding="16"
+                IsVisible="{Binding HasActiveSession}">
+                <Grid ColumnDefinitions="*,Auto" VerticalOptions="Center">
+                    <VerticalStackLayout Grid.Column="0" Spacing="3">
+                        <Label
+                            Text="● SESIÓN EN CURSO"
+                            FontSize="11"
+                            FontAttributes="Bold"
+                            TextColor="#28A745" />
+                        <Label
+                            Text="{Binding ActiveSession.TaskTitle}"
+                            FontSize="17"
+                            FontAttributes="Bold" />
+                        <Label
+                            Text="{Binding ActiveSession.ProjectName, StringFormat='Proyecto: {0}'}"
+                            FontSize="12"
+                            TextColor="Gray" />
+                        <HorizontalStackLayout Spacing="10" Margin="0,3,0,0">
+                            <Label
+                                Text="{Binding ActiveSession.FormattedDuration, StringFormat='⏱ {0}'}"
+                                FontSize="13"
+                                FontAttributes="Bold"
+                                TextColor="#28A745" />
+                            <Label
+                                Text="{Binding ActiveSession.FormattedRemainingTime, StringFormat='⏳ Restante: {0}'}"
+                                FontSize="13"
+                                FontAttributes="Bold"
+                                TextColor="#512BD4"
+                                IsVisible="{Binding ActiveSession.HasPlannedDuration}" />
+                        </HorizontalStackLayout>
+                    </VerticalStackLayout>
+                    <Button
+                        Grid.Column="1"
+                        Text="Ir al Temporizador"
+                        FontSize="13"
+                        FontAttributes="Bold"
+                        BackgroundColor="#28A745"
+                        TextColor="White"
+                        Clicked="OnActiveSessionClicked"
+                        VerticalOptions="Center" />
+                </Grid>
+            </Border>
+
             <!-- Tarjeta Principal: Tiempo Total Trabajado -->
             <Border
                 StrokeShape="RoundRectangle 16"
@@ -82,6 +131,69 @@
                     </Grid>
                 </VerticalStackLayout>
             </Border>
+
+            <!-- Tarjeta: Presupuesto y Progreso Temporal -->
+            <Border
+                StrokeShape="RoundRectangle 14"
+                Padding="16"
+                BackgroundColor="{AppThemeBinding Light=#FFFFFF, Dark=#242424}">
+                <VerticalStackLayout Spacing="12">
+                    <Label
+                        Text="PRESUPUESTO Y PROGRESO TEMPORAL"
+                        FontSize="11"
+                        FontAttributes="Bold"
+                        TextColor="Gray"
+                        CharacterSpacing="1" />
+
+                    <Grid ColumnDefinitions="*,*,*" ColumnSpacing="10">
+                        <VerticalStackLayout Grid.Column="0" Spacing="2">
+                            <Label Text="Planificado" FontSize="11" TextColor="Gray" />
+                            <Label
+                                Text="{Binding FormattedTotalPlannedTime}"
+                                FontSize="17"
+                                FontAttributes="Bold" />
+                        </VerticalStackLayout>
+
+                        <VerticalStackLayout Grid.Column="1" Spacing="2">
+                            <Label Text="Trabajado" FontSize="11" TextColor="Gray" />
+                            <Label
+                                Text="{Binding FormattedTotalTime}"
+                                FontSize="17"
+                                FontAttributes="Bold"
+                                TextColor="#512BD4" />
+                        </VerticalStackLayout>
+
+                        <VerticalStackLayout Grid.Column="2" Spacing="2">
+                            <Label Text="Restante" FontSize="11" TextColor="Gray" />
+                            <Label
+                                Text="{Binding FormattedTotalRemainingTime}"
+                                FontSize="17"
+                                FontAttributes="Bold"
+                                TextColor="#28A745" />
+                        </VerticalStackLayout>
+                    </Grid>
+
+                    <Grid ColumnDefinitions="*,Auto" Margin="0,2,0,0">
+                        <Label
+                            Grid.Column="0"
+                            Text="Avance del presupuesto planificado"
+                            FontSize="12"
+                            TextColor="Gray" />
+                        <Label
+                            Grid.Column="1"
+                            Text="{Binding FormattedTimeProgress}"
+                            FontSize="13"
+                            FontAttributes="Bold"
+                            TextColor="#512BD4" />
+                    </Grid>
+
+                    <ProgressBar
+                        Progress="{Binding TimeProgressRatio}"
+                        ProgressColor="#512BD4"
+                        HeightRequest="8" />
+                </VerticalStackLayout>
+            </Border>
+
 
             <!-- Resumen de Métricas Clave (Tarjetas) -->
             <Grid ColumnDefinitions="*,*,*" ColumnSpacing="10">

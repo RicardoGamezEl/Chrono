@@ -52,11 +52,31 @@
                                 FontSize="13"
                                 TextColor="Gray" />
 
-                            <Label
-                                Text="{Binding FormattedTotalTime, StringFormat='⏱ Tiempo: {0}'}"
-                                FontSize="12"
-                                TextColor="#512BD4"
-                                FontAttributes="Bold" />
+                            <HorizontalStackLayout Spacing="8" Margin="0,2">
+                                <Label
+                                    Text="{Binding FormattedTotalTime, StringFormat='⏱ {0}'}"
+                                    FontSize="12"
+                                    TextColor="#512BD4"
+                                    FontAttributes="Bold" />
+                                <Label
+                                    Text="{Binding FormattedRemainingTime, StringFormat='⏳ Restante: {0}'}"
+                                    FontSize="12"
+                                    TextColor="#28A745"
+                                    FontAttributes="Bold"
+                                    IsVisible="{Binding HasPlannedDuration}" />
+                                <Label
+                                    Text="{Binding FormattedPlannedDuration, StringFormat='🎯 Total: {0}'}"
+                                    FontSize="12"
+                                    TextColor="Gray"
+                                    IsVisible="{Binding HasPlannedDuration}" />
+                            </HorizontalStackLayout>
+
+                            <ProgressBar
+                                Progress="{Binding ProgressRatio}"
+                                ProgressColor="#28A745"
+                                HeightRequest="4"
+                                IsVisible="{Binding HasPlannedDuration}"
+                                Margin="0,2" />
 
                             <FlexLayout JustifyContent="SpaceBetween" AlignItems="Center" Wrap="Wrap">
                                 <Button

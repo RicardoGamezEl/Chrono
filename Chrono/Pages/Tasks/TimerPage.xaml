@@ -30,13 +30,22 @@
                 StrokeShape="RoundRectangle 16"
                 Padding="24"
                 BackgroundColor="{AppThemeBinding Light=#F7F7F9, Dark=#262626}">
-                <VerticalStackLayout Spacing="16" HorizontalOptions="Center">
+                <VerticalStackLayout Spacing="14" HorizontalOptions="Center">
                     <Label
                         x:Name="StatusBadgeLabel"
                         Text="DETENIDO"
                         FontSize="12"
                         FontAttributes="Bold"
                         TextColor="Gray"
+                        HorizontalOptions="Center" />
+
+                    <Label
+                        x:Name="TimerModeLabel"
+                        Text="TIEMPO RESTANTE"
+                        FontSize="11"
+                        FontAttributes="Bold"
+                        TextColor="#512BD4"
+                        CharacterSpacing="1"
                         HorizontalOptions="Center" />
 
                     <Label
@@ -54,6 +63,59 @@
                         HorizontalOptions="Center" />
                 </VerticalStackLayout>
             </Border>
+
+            <!-- Métricas de Sesión y Presupuesto -->
+            <Grid ColumnDefinitions="*,*,*" ColumnSpacing="10">
+                <Border
+                    Grid.Column="0"
+                    StrokeShape="RoundRectangle 10"
+                    Padding="12"
+                    BackgroundColor="{AppThemeBinding Light=#F4F4F6, Dark=#1F1F1F}">
+                    <VerticalStackLayout Spacing="3" HorizontalOptions="Center">
+                        <Label Text="Presupuesto" FontSize="11" TextColor="Gray" HorizontalOptions="Center"/>
+                        <Label
+                            x:Name="PlannedBudgetLabel"
+                            Text="00:00:00"
+                            FontSize="15"
+                            FontAttributes="Bold"
+                            HorizontalOptions="Center"/>
+                    </VerticalStackLayout>
+                </Border>
+
+                <Border
+                    Grid.Column="1"
+                    StrokeShape="RoundRectangle 10"
+                    Padding="12"
+                    BackgroundColor="{AppThemeBinding Light=#F4F4F6, Dark=#1F1F1F}">
+                    <VerticalStackLayout Spacing="3" HorizontalOptions="Center">
+                        <Label Text="Esta Sesión" FontSize="11" TextColor="Gray" HorizontalOptions="Center"/>
+                        <Label
+                            x:Name="CurrentSessionElapsedLabel"
+                            Text="00:00:00"
+                            FontSize="15"
+                            FontAttributes="Bold"
+                            TextColor="#28A745"
+                            HorizontalOptions="Center"/>
+                    </VerticalStackLayout>
+                </Border>
+
+                <Border
+                    Grid.Column="2"
+                    StrokeShape="RoundRectangle 10"
+                    Padding="12"
+                    BackgroundColor="{AppThemeBinding Light=#F4F4F6, Dark=#1F1F1F}">
+                    <VerticalStackLayout Spacing="3" HorizontalOptions="Center">
+                        <Label Text="Acumulado" FontSize="11" TextColor="Gray" HorizontalOptions="Center"/>
+                        <Label
+                            x:Name="TotalAccumulatedTimeLabel"
+                            Text="00:00:00"
+                            FontSize="15"
+                            FontAttributes="Bold"
+                            TextColor="#512BD4"
+                            HorizontalOptions="Center"/>
+                    </VerticalStackLayout>
+                </Border>
+            </Grid>
 
             <VerticalStackLayout Spacing="12">
                 <Button
@@ -83,20 +145,6 @@
                     FontSize="14"
                     Clicked="OnHistoryClicked" />
             </VerticalStackLayout>
-
-            <Border StrokeShape="RoundRectangle 8" Padding="14">
-                <VerticalStackLayout Spacing="4">
-                    <Label
-                        Text="Tiempo Total Acumulado en esta Tarea:"
-                        FontSize="12"
-                        TextColor="Gray" />
-                    <Label
-                        x:Name="TotalAccumulatedTimeLabel"
-                        Text="00:00:00"
-                        FontSize="20"
-                        FontAttributes="Bold" />
-                </VerticalStackLayout>
-            </Border>
         </VerticalStackLayout>
     </ScrollView>
 </ContentPage>

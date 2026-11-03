@@ -21,6 +21,10 @@ namespace Chrono
             builder.Services.AddSingleton<DatabaseService>();
             builder.Services.AddSingleton<ProductivityStatsCalculator>();
             builder.Services.AddSingleton<StatsService>();
+            builder.Services.AddSingleton<INotificationService, NotificationService>();
+            builder.Services.AddSingleton<TaskTimerService>();
+            builder.Services.AddSingleton<ITaskTimerService>(sp => sp.GetRequiredService<TaskTimerService>());
+            builder.Services.AddSingleton<ICountdownSessionService>(sp => sp.GetRequiredService<TaskTimerService>());
 
             // Pages
             builder.Services.AddTransient<MainPage>();

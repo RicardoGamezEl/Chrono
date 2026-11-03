@@ -10,8 +10,17 @@ public class DatabaseService
     private bool _isInitialized;
 
     public DatabaseService()
+#if ANDROID || IOS || MACCATALYST || WINDOWS
+        : this(Path.Combine(FileSystem.AppDataDirectory, "chrono.db"))
+#else
+        : this(Path.Combine(Path.GetTempPath(), "chrono.db"))
+#endif
     {
-        _database = new SQLiteAsyncConnection(Path.Combine(FileSystem.AppDataDirectory, "chrono.db"));
+    }
+
+    public DatabaseService(string dbPath)
+    {
+        _database = new SQLiteAsyncConnection(dbPath);
     }
 
     public async Task InitializeAsync()
@@ -172,24 +181,30 @@ public class DatabaseService
             .ToList();
     }
 
-    public async Task<TimeSpan> GetTotalDurationByTaskAsync(int taskId)
+    public async Task<TimeSpan> GetTotalDurationByTaskAsync(int taskId, bool includeActive = false)
     {
         var entries = await GetTimeEntriesByTaskAsync(taskId);
         var total = TimeSpan.Zero;
         foreach (var entry in entries)
         {
-            total += entry.Duration;
+            if (entry.End.HasValue || includeActive)
+            {
+                total += entry.Duration;
+            }
         }
         return total;
     }
 
-    public async Task<TimeSpan> GetTotalDurationByProjectAsync(int projectId)
+    public async Task<TimeSpan> GetTotalDurationByProjectAsync(int projectId, bool includeActive = false)
     {
         var entries = await GetTimeEntriesByProjectAsync(projectId);
         var total = TimeSpan.Zero;
         foreach (var entry in entries)
         {
-            total += entry.Duration;
+            if (entry.End.HasValue || includeActive)
+            {
+                total += entry.Duration;
+            }
         }
         return total;
     }

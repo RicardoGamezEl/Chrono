@@ -44,10 +44,79 @@ public class ProductivityStatsCalculator
         stats.TodayLoggedTime = CalculateDurationForDate(timeEntries, today);
         stats.WeekLoggedTime = CalculateDurationForDateRange(timeEntries, startOfWeek, today.AddDays(1).AddTicks(-1));
 
-        // Projects breakdown
+        // Maps for fast lookup
         var tasksByProject = tasks.GroupBy(t => t.ProjectId).ToDictionary(g => g.Key, g => g.ToList());
         var tasksMap = tasks.ToDictionary(t => t.Id);
         var projectsMap = projects.ToDictionary(p => p.Id);
+
+        // Calculate worked time per task
+        var taskDurationMap = timeEntries
+            .GroupBy(te => te.TaskId)
+            .ToDictionary(g => g.Key, g => CalculateTotalDuration(g));
+
+        // Planned and Remaining calculations across all tasks
+        var totalPlannedTicks = tasks.Sum(t => t.PlannedDurationTicks);
+        stats.TotalPlannedTime = TimeSpan.FromTicks(totalPlannedTicks);
+
+        var totalRemaining = TimeSpan.Zero;
+        var totalWorkedOnPlanned = TimeSpan.Zero;
+
+        foreach (var task in tasks)
+        {
+            if (task.PlannedDurationTicks > 0)
+            {
+                var worked = taskDurationMap.TryGetValue(task.Id, out var w) ? w : TimeSpan.Zero;
+                totalWorkedOnPlanned += worked;
+                var remaining = task.PlannedDuration > worked ? task.PlannedDuration - worked : TimeSpan.Zero;
+                totalRemaining += remaining;
+            }
+        }
+
+        stats.TotalRemainingTime = totalRemaining;
+        stats.TotalWorkedOnPlannedTime = totalWorkedOnPlanned;
+
+        if (stats.TotalPlannedTime > TimeSpan.Zero)
+        {
+            var ratio = totalWorkedOnPlanned.TotalSeconds / stats.TotalPlannedTime.TotalSeconds;
+            stats.TimeProgressRatio = Math.Min(1.0, Math.Max(0.0, ratio));
+        }
+        else
+        {
+            stats.TimeProgressRatio = 0.0;
+        }
+
+        // Active session detection
+        var activeEntry = timeEntries.FirstOrDefault(te => te.End == null);
+        if (activeEntry != null)
+        {
+            var hasTask = tasksMap.TryGetValue(activeEntry.TaskId, out var task);
+            var taskTitle = hasTask && task != null ? task.Title : $"Tarea #{activeEntry.TaskId}";
+            var projectId = hasTask && task != null ? task.ProjectId : 0;
+            var hasProject = projectsMap.TryGetValue(projectId, out var project);
+            var projectName = hasProject && project != null ? project.Name : "Proyecto";
+
+            var hasPlanned = hasTask && task != null && task.HasPlannedDuration;
+            var remainingTime = TimeSpan.Zero;
+            if (hasPlanned && task != null)
+            {
+                var worked = taskDurationMap.TryGetValue(task.Id, out var w) ? w : TimeSpan.Zero;
+                remainingTime = task.PlannedDuration > worked ? task.PlannedDuration - worked : TimeSpan.Zero;
+            }
+
+            stats.ActiveSession = new RecentActivityItem
+            {
+                TimeEntryId = activeEntry.Id,
+                TaskId = activeEntry.TaskId,
+                TaskTitle = taskTitle,
+                ProjectId = projectId,
+                ProjectName = projectName,
+                Start = activeEntry.Start,
+                End = null,
+                Duration = activeEntry.Duration,
+                HasPlannedDuration = hasPlanned,
+                RemainingTime = remainingTime
+            };
+        }
 
         var projectStatsList = new List<ProjectProgressStats>();
         foreach (var project in projects)

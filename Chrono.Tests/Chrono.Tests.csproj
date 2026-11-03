@@ -27,7 +27,13 @@
     <Compile Include="..\Chrono\Models\ProjectProgressStats.cs" Link="Models\ProjectProgressStats.cs" />
     <Compile Include="..\Chrono\Models\RecentActivityItem.cs" Link="Models\RecentActivityItem.cs" />
     <Compile Include="..\Chrono\Models\ProductivityDashboardStats.cs" Link="Models\ProductivityDashboardStats.cs" />
+    <Compile Include="..\Chrono\Models\ActiveSessionState.cs" Link="Models\ActiveSessionState.cs" />
     <Compile Include="..\Chrono\Services\ProductivityStatsCalculator.cs" Link="Services\ProductivityStatsCalculator.cs" />
+    <Compile Include="..\Chrono\Services\DatabaseService.cs" Link="Services\DatabaseService.cs" />
+    <Compile Include="..\Chrono\Services\INotificationService.cs" Link="Services\INotificationService.cs" />
+    <Compile Include="..\Chrono\Services\ICountdownSessionService.cs" Link="Services\ICountdownSessionService.cs" />
+    <Compile Include="..\Chrono\Services\ITaskTimerService.cs" Link="Services\ITaskTimerService.cs" />
+    <Compile Include="..\Chrono\Services\TaskTimerService.cs" Link="Services\TaskTimerService.cs" />
   </ItemGroup>
 
 </Project>
